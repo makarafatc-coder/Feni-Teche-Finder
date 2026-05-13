@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FENITECH | Pro Expert Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        
+        /* Modal Animation */
+        .modal-active { display: flex !important; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .glass-card { background: white; border-radius: 25px; border: 1px solid #eef2f6; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
+        .hero-overlay { background: linear-gradient(to bottom, rgba(15, 23, 42, 0.3), rgba(15, 23, 42, 0.8)); }
+        .input-box { width: 100%; padding: 0.9rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; outline: none; margin-bottom: 12px; font-weight: bold; }
+        .close-btn { position: absolute; top: 20px; right: 20px; color: #94a3b8; cursor: pointer; font-size: 1.5rem; transition: 0.3s; }
+        .close-btn:hover { color: #ef4444; }
+        .verify-badge { color: #1d9bf0; font-size: 1.1rem; margin-left: 4px; }
+        .tech-card { transition: 0.3s; border: 1px solid #f1f5f9; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .tech-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="bg-white/90 backdrop-blur-md border-b py-4 sticky top-0 z-[100] shadow-sm">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-2xl font-black text-blue-600 cursor-pointer" onclick="location.reload()">FENI<span class="text-slate-800">TECH</span></h1>
+            
+            <div id="navButtons" class="flex items-center gap-3">
+                <div id="loggedOutUI" class="flex gap-2">
+                    <button onclick="openModal('login')" class="font-bold text-slate-600 px-4 py-2 text-sm">Login</button>
+                    <button onclick="openModal('register')" class="bg-blue-600 text-white px-5 py-2 rounded-xl font-bold shadow-lg shadow-blue-200 text-sm">Join as Expert</button>
+                    <button onclick="openModal('adminLogin')" class="bg-slate-100 text-slate-600 p-2 rounded-xl"><i class="fas fa-user-shield"></i></button>
+                </div>
+                <div id="loggedInUI" class="hidden flex items-center gap-4">
+                    <button onclick="openModal('dashboard')" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold text-sm">Dashboard</button>
+                    <button onclick="openModal('profile')">
+                        <img id="navProfileImg" src="https://via.placeholder.com/150" class="w-10 h-10 rounded-full border-2 border-blue-600 object-cover">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO BANNER SECTION -->
+    <div class="relative w-full h-[350px] md:h-[500px] overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop" 
+             class="absolute inset-0 w-full h-full object-cover" alt="Service Banner">
+        <div class="absolute inset-0 hero-overlay flex flex-col items-center justify-center text-center px-6">
+            <h2 class="text-white text-3xl md:text-6xl font-black mb-4 drop-shadow-xl">
+                ফেনীর সেরা এক্সপার্ট খুঁজুন
+            </h2>
+            <p class="text-blue-100 text-sm md:text-xl font-bold mb-8 max-w-2xl">
+                এসি, ইলেকট্রিক ও আইটি সার্ভিসের জন্য সরাসরি টেকনিশিয়ানের সাথে যোগাযোগ করুন।
+            </p>
+            
+            <!-- Search Box -->
+            <div class="bg-white p-2 rounded-2xl shadow-2xl flex w-full max-w-xl border-4 border-white/20">
+                <input type="text" id="searchInput" placeholder="সার্ভিস বা লোকেশন খুঁজুন..." 
+                       class="bg-transparent w-full px-6 text-slate-800 font-bold outline-none">
+                <button onclick="searchTechs()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black hover:bg-blue-700 transition">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING CATEGORY BAR -->
+    <div class="container mx-auto px-6 -mt-10 relative z-10">
+        <div class="bg-white shadow-xl rounded-3xl p-4 flex gap-3 overflow-x-auto no-scrollbar border border-slate-100">
+            <button onclick="filterTech('All')" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shrink-0 shadow-lg shadow-blue-200">সব</button>
+            <button onclick="filterTech('AC Mechanic')" class="bg-slate-50 text-slate-600 px-6 py-3 rounded-2xl font-black border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition shrink-0">এসি মেকানিক</button>
+            <button onclick="filterTech('Electrician')" class="bg-slate-50 text-slate-600 px-6 py-3 rounded-2xl font-black border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition shrink-0">ইলেকট্রিশিয়ান</button>
+            <button onclick="filterTech('CCTV Expert')" class="bg-slate-50 text-slate-600 px-6 py-3 rounded-2xl font-black border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition shrink-0">CCTV এক্সপার্ট</button>
+            <button onclick="filterTech('IT Technician')" class="bg-slate-50 text-slate-600 px-6 py-3 rounded-2xl font-black border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition shrink-0">আইটি সাপোর্ট</button>
+        </div>
+    </div>
+
+    <!-- MAIN TECH LIST -->
+    <main class="container mx-auto px-6 py-16">
+        <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-2">
+            <i class="fas fa-tools text-blue-600"></i> প্রোফেশনাল টেকনিশিয়ানগণ
+        </h3>
+        <div id="techList" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Dynamic Content -->
+        </div>
+    </main>
+
+    <!-- ALL MODALS (REGISTER, LOGIN, ADMIN, DASHBOARD, PROFILE, VERIFY, JOB) -->
+    
+    <!-- Register Modal -->
+    <div id="registerModal" class="hidden fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-md p-10 text-center">
+            <i class="fas fa-times close-btn" onclick="closeModal('register')"></i>
+            <h2 class="text-2xl font-black mb-6 text-blue-600">নতুন একাউন্ট</h2>
+            <div id="regForm">
+                <input type="text" id="regName" placeholder="আপনার নাম" class="input-box">
+                <input type="tel" id="regPhone" placeholder="মোবাইল নাম্বার" class="input-box">
+                <select id="regExpertise" class="input-box">
+                    <option value="">কাজের ধরন সিলেক্ট করুন</option>
+                    <option value="AC Mechanic">AC Mechanic</option>
+                    <option value="Electrician">Electrician</option>
+                    <option value="CCTV Expert">CCTV Expert</option>
+                    <option value="Plumber">Plumber</option>
+                    <option value="IT Technician">IT Technician</option>
+                    <option value="Appliance Repair">Home Appliance Repair</option>
+                </select>
+                <input type="password" id="regPass" placeholder="পাসওয়ার্ড সেট করুন" class="input-box">
+                <div id="recaptcha-container"></div>
+                <button onclick="sendOTP()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4">OTP পাঠান</button>
+            </div>
+            <div id="otpForm" class="hidden">
+                <p class="text-slate-400 mb-4 font-bold">কোডটি দিন</p>
+                <input type="number" id="otpCode" placeholder="######" class="input-box text-center text-2xl tracking-widest">
+                <button onclick="verifyOTP()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black">ভেরিফাই ও রেজিস্টার</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-md p-10 text-center">
+            <i class="fas fa-times close-btn" onclick="closeModal('login')"></i>
+            <h2 class="text-2xl font-black mb-6 text-blue-600">Expert Login</h2>
+            <input type="tel" id="loginPhone" placeholder="মোবাইল নাম্বার" class="input-box">
+            <input type="password" id="loginPass" placeholder="পাসওয়ার্ড" class="input-box">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black">লগইন করুন</button>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-md p-10 text-center">
+            <i class="fas fa-times close-btn" onclick="closeModal('adminLogin')"></i>
+            <h2 class="text-2xl font-black mb-6 text-red-600">Admin Login</h2>
+            <input type="text" id="adminUser" placeholder="Username" class="input-box">
+            <input type="password" id="adminPass" placeholder="Password" class="input-box">
+            <button onclick="handleAdminLogin()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black">Admin প্রবেশ</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanelModal" class="hidden fixed inset-0 bg-slate-100 z-[300] flex flex-col p-4 md:p-10 overflow-y-auto">
+        <div class="container mx-auto max-w-5xl glass-card p-8 min-h-full">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-black text-red-600">Admin Control Panel</h2>
+                <button onclick="closeModal('adminPanel')" class="bg-red-100 text-red-600 p-3 rounded-full"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-400 text-xs uppercase font-black">
+                        <tr><th class="p-4">Expert</th><th class="p-4">Expertise</th><th class="p-4">Docs</th><th class="p-4">Action</th></tr>
+                    </thead>
+                    <tbody id="adminList" class="font-bold text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div id="dashboardModal" class="hidden fixed inset-0 bg-slate-50 z-[250] flex flex-col p-4 md:p-8 overflow-y-auto">
+        <div class="container mx-auto max-w-5xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-black text-slate-800">My Dashboard</h2>
+                <button onclick="closeModal('dashboard')" class="text-slate-400 text-2xl"><i class="fas fa-times-circle"></i></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glass-card p-6 bg-blue-600 text-white"><p class="text-xs opacity-70">মোট আয়</p><h3 id="dashIncome" class="text-3xl font-black">৳ ০</h3></div>
+                <div class="glass-card p-6"><p class="text-xs text-slate-400">কাজ সম্পন্ন</p><h3 id="dashDone" class="text-3xl font-black">০</h3></div>
+                <div class="glass-card p-6 border-l-8 border-yellow-400"><p class="text-xs text-slate-400">স্ট্যাটাস</p><h3 id="dashStatus" class="text-xl font-black uppercase">Unverified</h3></div>
+            </div>
+            <div class="glass-card p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="font-black text-lg">সাম্প্রতিক কাজ</h4>
+                    <button onclick="document.getElementById('jobAddModal').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">+ Add Job</button>
+                </div>
+                <table class="w-full text-left font-bold text-slate-600 min-w-[400px]">
+                    <tbody id="jobList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black/60 z-[260] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass-card w-full max-w-md overflow-hidden">
+            <div class="h-24 hero-overlay relative">
+                <i class="fas fa-times absolute top-4 right-4 text-white cursor-pointer" onclick="closeModal('profile')"></i>
+            </div>
+            <div class="px-8 pb-8 text-center">
+                <div class="relative -top-12 inline-block">
+                    <img id="profileImg" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover">
+                    <label class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer border-2 border-white">
+                        <i class="fas fa-camera text-[10px]"></i>
+                        <input type="file" class="hidden" onchange="previewImg(this, 'profileImg')">
+                    </label>
+                </div>
+                <div class="-mt-8 mb-6 text-center">
+                    <div class="flex justify-center items-center"><h3 id="profileName" class="text-xl font-black">Name</h3><span id="verifyBadgeArea"></span></div>
+                    <p id="profilePhone" class="text-slate-400 text-xs font-bold"></p>
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="editLocation" placeholder="আপনার লোকেশন" class="input-box">
+                    <button onclick="saveProfileFull()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">Update Profile</button>
+                    <button onclick="document.getElementById('verifyModal').classList.remove('hidden')" id="applyBtn" class="w-full bg-yellow-400 text-blue-900 py-3 rounded-xl font-black">Apply Verification</button>
+                    <button onclick="logout()" class="w-full text-red-500 font-bold">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Modal -->
+    <div id="verifyModal" class="hidden fixed inset-0 bg-black/80 z-[400] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-sm p-8 text-center">
+            <i class="fas fa-times close-btn" onclick="document.getElementById('verifyModal').classList.add('hidden')"></i>
+            <h3 class="font-black mb-4">Identity Verification</h3>
+            <div class="space-y-4">
+                <div class="border-2 border-dashed p-4 rounded-2xl">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">NID Photo</p>
+                    <input type="file" class="text-[10px]" onchange="previewImg(this, 'vNidPrev')">
+                    <img id="vNidPrev" class="hidden h-20 w-full object-cover mt-2 rounded shadow">
+                </div>
+                <div class="border-2 border-dashed p-4 rounded-2xl">
+                    <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Selfie</p>
+                    <input type="file" class="text-[10px]" onchange="previewImg(this, 'vSelfPrev')">
+                    <img id="vSelfPrev" class="hidden h-20 w-full object-cover mt-2 rounded shadow">
+                </div>
+                <button onclick="submitVerify()" class="w-full bg-green-600 text-white py-3 rounded-xl font-black">Submit Application</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Modal -->
+    <div id="jobAddModal" class="hidden fixed inset-0 bg-black/70 z-[400] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-sm p-8">
+            <h3 class="font-black mb-4">New Work Details</h3>
+            <input type="text" id="custName" placeholder="Customer Name" class="input-box">
+            <input type="text" id="jobType" placeholder="Service Type" class="input-box">
+            <input type="number" id="jobBill" placeholder="Bill (৳)" class="input-box">
+            <button onclick="saveJob()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-black">Save Work</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, child, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeyzfxZevcY_OI4p2ZbNCF4Jekqu6X7bs",
+            authDomain: "feni-techfinder-ab409.firebaseapp.com",
+            projectId: "feni-techfinder-ab409",
+            storageBucket: "feni-techfinder-ab409.firebasestorage.app",
+            messagingSenderId: "898223486648",
+            appId: "1:898223486648:web:bd11dc3b85d0ea5cd6a64d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // UI Helpers
+        window.openModal = (id) => {
+            document.getElementById(id + 'Modal').classList.add('modal-active');
+            if(id === 'dashboard') loadAllData();
+        };
+        window.closeModal = (id) => {
+            document.getElementById(id + 'Modal').classList.remove('modal-active');
+        };
+
+        // Auth
+        window.handleLogin = async () => {
+            const p = document.getElementById('loginPhone').value;
+            const pw = document.getElementById('loginPass').value;
+            const snap = await get(child(ref(db), `users/${p}`));
+            if (snap.exists() && snap.val().pass === pw) {
+                localStorage.setItem('loggedInUser', p);
+                location.reload();
+            } else alert("Invalid Login!");
+        };
+
+        window.handleAdminLogin = () => {
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+            if(user === "fenitechfinder" && pass === "azimtechfinderfeni00") {
+                closeModal('adminLogin');
+                openModal('adminPanel');
+                loadAdminPanel();
+            } else alert("Wrong Credentials!");
+        };
+
+        // OTP
+        window.sendOTP = async () => {
+            const phone = document.getElementById('regPhone').value.trim();
+            const fullPhone = '+88' + phone.slice(-11);
+            if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
+            signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier)
+                .then((res) => { window.confirmationResult = res; document.getElementById('regForm').classList.add('hidden'); document.getElementById('otpForm').classList.remove('hidden'); })
+                .catch((e) => alert(e.message));
+        };
+
+        window.verifyOTP = () => {
+            window.confirmationResult.confirm(document.getElementById('otpCode').value).then(async () => {
+                const phone = document.getElementById('regPhone').value;
+                await set(ref(db, `users/${phone}`), { name: document.getElementById('regName').value, phone, expertise: document.getElementById('regExpertise').value, pass: document.getElementById('regPass').value, income: 0, doneCount: 0, status: 'Unverified' });
+                location.reload();
+            }).catch(() => alert("Wrong OTP!"));
+        };
+
+        // Data Loading
+        window.loadAllData = () => {
+            const u = window.currentUser; if(!u) return;
+            document.getElementById('navProfileImg').src = u.profilePic || "https://via.placeholder.com/150";
+            document.getElementById('profileImg').src = u.profilePic || "https://via.placeholder.com/150";
+            document.getElementById('profileName').innerText = u.name;
+            document.getElementById('profilePhone').innerText = u.phone;
+            document.getElementById('dashIncome').innerText = "৳ " + (u.income || 0);
+            document.getElementById('dashDone').innerText = u.doneCount || 0;
+            document.getElementById('dashStatus').innerText = u.status || "Unverified";
+            if(u.status === 'Verified') document.getElementById('verifyBadgeArea').innerHTML = '<i class="fas fa-check-circle verify-badge"></i>';
+            loadJobs();
+        };
+
+        // Admin Funcs
+        function loadAdminPanel() {
+            onValue(ref(db, 'users'), (snapshot) => {
+                const list = document.getElementById('adminList'); list.innerHTML = "";
+                const data = snapshot.val(); if(!data) return;
+                Object.values(data).forEach(u => {
+                    if(u.status === 'Pending') {
+                        list.innerHTML += `<tr class="border-b"><td class="p-4">${u.name}<br>${u.phone}</td><td class="p-4 text-blue-600">${u.expertise}</td><td class="p-4 flex gap-2"><img src="${u.vDoc}" onclick="viewLarge('${u.vDoc}')" class="h-10 w-10 rounded cursor-zoom-in"> <img src="${u.vSelfie}" onclick="viewLarge('${u.vSelfie}')" class="h-10 w-10 rounded cursor-zoom-in"></td><td class="p-4 flex gap-2"><button onclick="approveExpert('${u.phone}')" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs">Verify</button><button onclick="declineExpert('${u.phone}')" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs">Decline</button></td></tr>`;
+                    }
+                });
+            });
+        }
+        window.viewLarge = (src) => { const v = document.createElement('div'); v.className = "fixed inset-0 bg-black/90 z-[600] flex items-center justify-center p-4"; v.innerHTML = `<img src="${src}" class="max-w-full max-h-full rounded shadow-2xl">`; v.onclick = () => v.remove(); document.body.appendChild(v); };
+        window.approveExpert = async (p) => { await update(ref(db, `users/${p}`), { status: 'Verified' }); alert("Verified!"); };
+        window.declineExpert = async (p) => { await update(ref(db, `users/${p}`), { status: 'Unverified', vDoc: null, vSelfie: null }); alert("Declined!"); };
+
+        // Render Cards
+        onValue(ref(db, 'users'), (snapshot) => {
+            const data = snapshot.val(); window.allUsers = data ? Object.values(data) : [];
+            renderTechs(window.allUsers);
+        });
+        window.renderTechs = (users) => {
+            const list = document.getElementById('techList'); list.innerHTML = "";
+            users.forEach(u => {
+                const v = u.status === 'Verified' ? '<i class="fas fa-check-circle verify-badge"></i>' : '';
+                list.innerHTML += `<div class="tech-card"><div class="flex items-center gap-4 mb-4"><img src="${u.profilePic || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full object-cover"><div><h4 class="font-black text-sm">${u.name} ${v}</h4><span class="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">${u.expertise || 'Expert'}</span></div></div><div class="text-[10px] font-bold text-slate-500 mb-5"><i class="fas fa-map-marker-alt text-red-400"></i> ${u.location || 'Feni'}</div><a href="tel:${u.phone}" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs shadow-lg shadow-blue-100"><i class="fas fa-phone-alt"></i> CALL NOW</a></div>`;
+            });
+        };
+
+        window.filterTech = (cat) => { if(cat === 'All') renderTechs(window.allUsers); else renderTechs(window.allUsers.filter(u => u.expertise === cat)); };
+
+        // Save Logic
+        window.saveProfileFull = async () => { await update(ref(db, `users/${window.currentUser.phone}`), { location: document.getElementById('editLocation').value, profilePic: document.getElementById('profileImg').src }); location.reload(); };
+        window.saveJob = async () => { const bill = parseInt(document.getElementById('jobBill').value); const p = window.currentUser.phone; await set(ref(db, `users/${p}/jobs/${Date.now()}`), { customer: document.getElementById('custName').value, type: document.getElementById('jobType').value, bill, date: new Date().toLocaleDateString() }); await update(ref(db, `users/${p}`), { income: (window.currentUser.income || 0) + bill, doneCount: (window.currentUser.doneCount || 0) + 1 }); location.reload(); };
+        async function loadJobs() { const snap = await get(child(ref(db), `users/${window.currentUser.phone}/jobs`)); const list = document.getElementById('jobList'); list.innerHTML = ""; if(snap.exists()) { Object.values(snap.val()).reverse().forEach(j => { list.innerHTML += `<tr class="border-b text-[11px]"><td class="py-4 text-slate-400">${j.date}</td><td class="py-4 font-black text-slate-700">${j.customer}<br><span class="text-[9px] text-slate-400 uppercase">${j.type}</span></td><td class="py-4 text-right font-black text-blue-600">৳${j.bill}</td></tr>`; }); } }
+        window.submitVerify = async () => { await update(ref(db, `users/${window.currentUser.phone}`), { status: 'Pending', vDoc: document.getElementById('vNidPrev').src, vSelfie: document.getElementById('vSelfPrev').src }); alert("Submitted!"); location.reload(); };
+        window.previewImg = (input, id) => { const r = new FileReader(); r.onload = (e) => { const i = document.getElementById(id); i.src = e.target.result; i.classList.remove('hidden'); }; r.readAsDataURL(input.files[0]); };
+        window.logout = () => { localStorage.clear(); location.reload(); };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const saved = localStorage.getItem('loggedInUser');
+            if (saved) {
+                const snap = await get(child(ref(db), `users/${saved}`));
+                if (snap.exists()) { window.currentUser = snap.val(); document.getElementById('loggedOutUI').classList.add('hidden'); document.getElementById('loggedInUI').classList.remove('hidden'); document.getElementById('navProfileImg').src = window.currentUser.profilePic || "https://via.placeholder.com/150"; }
+            }
+        });
+    </script>
+</body>
+</html>
