@@ -60,7 +60,7 @@
                 ফেনীর সেরা এক্সপার্ট খুঁজুন
             </h2>
             <p class="text-blue-100 text-sm md:text-xl font-bold mb-6 max-w-2xl">
-                এসি, ইলেকট্রিক ও আইটি সার্ভিসের জন্য সরাসরি টেকনিশিয়ানের সাথে যোগাযোগ করুন।
+                এসি, ইলেকট্রিক ও আইটি সার্ভিসের জন্য সরাসরি আমাদের সেন্ট্রাল হেল্পলাইনে যোগাযোগ করুন।
             </p>
             
             <div class="bg-white p-2 rounded-2xl shadow-2xl flex w-full max-w-xl border-4 border-white/20 mb-6">
@@ -120,12 +120,7 @@
                     <option value="IT Technician">IT Technician</option>
                 </select>
                 <input type="password" id="regPass" placeholder="পাসওয়ার্ড সেট করুন" class="input-box">
-                <div id="recaptcha-container"></div>
-                <button onclick="sendOTP()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4">OTP পাঠান</button>
-            </div>
-            <div id="otpForm" class="hidden">
-                <input type="number" id="otpCode" placeholder="######" class="input-box text-center text-2xl tracking-widest">
-                <button onclick="verifyOTP()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black">ভেরিফাই ও রেজিস্টার</button>
+                <button onclick="handleDirectRegister()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4">রেজিস্ট্রেশন করুন</button>
             </div>
         </div>
     </div>
@@ -151,15 +146,30 @@
     </div>
 
     <div id="adminPanelModal" class="hidden fixed inset-0 bg-slate-100 z-[300] flex flex-col p-4 md:p-10 overflow-y-auto">
-        <div class="container mx-auto max-w-5xl glass-card p-8 min-h-full">
+        <div class="container mx-auto max-w-6xl glass-card p-8 min-h-full">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black text-red-600">Admin Control Panel</h2>
+                <div>
+                    <h2 class="text-2xl font-black text-red-600">Admin Control Panel</h2>
+                    <p class="text-xs text-slate-400 font-bold mt-1">টেকনিশিয়ানদের ডাটাবেজ ও যোগাযোগ তালিকা</p>
+                </div>
                 <button onclick="closeModal('adminPanel')" class="bg-red-100 text-red-600 p-3 rounded-full"><i class="fas fa-times"></i></button>
             </div>
-            <table class="w-full text-left font-bold text-sm">
-                <thead class="bg-slate-50 text-slate-400"><tr><th class="p-4">Expert</th><th class="p-4">Expertise</th><th class="p-4">Docs</th><th class="p-4">Action</th></tr></thead>
-                <tbody id="adminList"></tbody>
-            </table>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left font-bold text-sm min-w-[800px]">
+                    <thead class="bg-slate-50 text-slate-500">
+                        <tr>
+                            <th class="p-4">Expert Name</th>
+                            <th class="p-4">Expertise</th>
+                            <th class="p-4">Personal Contact</th>
+                            <th class="p-4">Location</th>
+                            <th class="p-4">Identity Verification Docs</th>
+                            <th class="p-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminList" class="text-slate-700"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -202,9 +212,11 @@
             <i class="fas fa-times close-btn" onclick="document.getElementById('verifyModal').classList.add('hidden')"></i>
             <h3 class="font-black mb-4 text-sm">Identity Verification</h3>
             <div class="space-y-4">
-                <input type="file" class="text-xs" onchange="previewImg(this, 'vNidPrev')"><img id="vNidPrev" class="hidden h-20 w-full object-cover rounded">
-                <input type="file" class="text-xs" onchange="previewImg(this, 'vSelfPrev')"><img id="vSelfPrev" class="hidden h-20 w-full object-cover rounded">
-                <button onclick="submitVerify()" class="w-full bg-green-600 text-white py-3 rounded-xl font-black">Submit</button>
+                <p class="text-xs text-left text-slate-400 font-bold">NID / ID Card Upload:</p>
+                <input type="file" class="text-xs w-full" onchange="previewImg(this, 'vNidPrev')"><img id="vNidPrev" class="hidden h-20 w-full object-cover rounded mt-2">
+                <p class="text-xs text-left text-slate-400 font-bold mt-2">Profile Selfie Upload:</p>
+                <input type="file" class="text-xs w-full" onchange="previewImg(this, 'vSelfPrev')"><img id="vSelfPrev" class="hidden h-20 w-full object-cover rounded mt-2">
+                <button onclick="submitVerify()" class="w-full bg-green-600 text-white py-3 rounded-xl font-black mt-4">Submit to Admin</button>
             </div>
         </div>
     </div>
@@ -215,10 +227,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getDatabase, ref, set, get, child, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // UPDATED: আপনার feni-techfinder-ab409 প্রোজেক্টের আসল ফুল কনফিগারেশন 
         const firebaseConfig = {
             apiKey: "AIzaSyAeYzfXzevcY_OI4p2ZbNCF4JEkqu6X7bs",
             authDomain: "feni-techfinder-ab409.firebaseapp.com",
@@ -232,14 +242,21 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const auth = getAuth(app);
 
         window.currentUser = null;
         window.allUsers = [];
 
+        // সেন্ট্রাল কোম্পানি হেল্পলাইন নাম্বার
+        const OFFICIAL_COMPANY_NUMBER = "01816167910"; 
+
         // UI Helpers
-        window.openModal = (id) => { document.getElementById(id + 'Modal').classList.add('modal-active'); if(id === 'dashboard' || id === 'profile') loadAllData(); };
-        window.closeModal = (id) => { document.getElementById(id + 'Modal').classList.remove('modal-active'); };
+        window.openModal = (id) => { 
+            document.getElementById(id + 'Modal').classList.add('modal-active'); 
+            if(id === 'dashboard' || id === 'profile') loadAllData(); 
+        };
+        window.closeModal = (id) => { 
+            document.getElementById(id + 'Modal').classList.remove('modal-active'); 
+        };
 
         // Login Logic
         window.handleLogin = async () => {
@@ -260,64 +277,165 @@
         window.handleAdminLogin = () => {
             const u = document.getElementById('adminUser').value;
             const p = document.getElementById('adminPass').value;
-            if(u === "fenitechfinder" && p === "azimtechfinderfeni00") { closeModal('adminLogin'); openModal('adminPanel'); loadAdminPanel(); } else alert("Error!");
-        };
-
-        // OTP Logic
-        window.sendOTP = async () => {
-            try {
-                const rawPhone = document.getElementById('regPhone').value.trim();
-                if(!rawPhone) { alert("দয়া করে মোবাইল নাম্বার দিন।"); return; }
-                const phone = rawPhone.startsWith('0') ? '+88' + rawPhone : '+880' + rawPhone;
-                
-                if (window.recaptchaVerifier) window.recaptchaVerifier.clear();
-                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
-                
-                signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
-                    .then((res) => { 
-                        window.confirmationResult = res; 
-                        document.getElementById('regForm').classList.add('hidden'); 
-                        document.getElementById('otpForm').classList.remove('hidden'); 
-                    })
-                    .catch((e) => {
-                        alert("OTP পাঠাতে সমস্যা হয়েছে। আপনার Firebase কনসোলের feni-techfinder-ab409 প্রোজেক্টে Phone auth এবং Authorized domains চালু আছে কি না নিশ্চিত করুন। এরর: " + e.message);
-                    });
-            } catch (err) {
-                alert("কোডে ভুল হয়েছে: " + err.message);
+            if(u === "fenitechfinder" && p === "azimtechfinderfeni00") { 
+                closeModal('adminLogin'); 
+                openModal('adminPanel'); 
+                loadAdminPanel(); 
+            } else {
+                alert("ভুল এডমিন ইউজারনেম বা পাসওয়ার্ড!");
             }
         };
 
-        window.verifyOTP = () => {
-            window.confirmationResult.confirm(document.getElementById('otpCode').value).then(async () => {
-                const phone = document.getElementById('regPhone').value.trim();
-                await set(ref(db, `users/${phone}`), { name: document.getElementById('regName').value, phone, expertise: document.getElementById('regExpertise').value, pass: document.getElementById('regPass').value, income: 0, doneCount: 0, status: 'Unverified' });
+        // ওটিপি ছাড়া সরাসরি রেজিস্ট্রেশন সিস্টেম
+        window.handleDirectRegister = async () => {
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const expertise = document.getElementById('regExpertise').value;
+            const pass = document.getElementById('regPass').value;
+
+            if(!name || !phone || !expertise || !pass) {
+                alert("দয়া করে সবকটি ঘর পূরণ করুন!");
+                return;
+            }
+
+            try {
+                const checkSnap = await get(child(ref(db), `users/${phone}`));
+                if(checkSnap.exists()) {
+                    alert("এই মোবাইল নাম্বারটি দিয়ে অলরেডি অ্যাকাউন্ট খোলা আছে!");
+                    return;
+                }
+
+                await set(ref(db, `users/${phone}`), { 
+                    name, 
+                    phone, 
+                    expertise, 
+                    pass, 
+                    income: 0, 
+                    doneCount: 0, 
+                    status: 'Unverified' 
+                });
+
                 localStorage.setItem('loggedInUser', phone);
+                alert("রেজিস্ট্রেশন সফল হয়েছে!");
                 location.reload();
-            }).catch(() => alert("ভুল ওটিপি কোড!"));
+            } catch (err) {
+                alert("রেজিস্ট্রেশন করতে সমস্যা হয়েছে: " + err.message);
+            }
         };
 
-        // Realtime Sync
+        // Realtime Sync (সব ইউজারের ডাটা লোকাল অ্যারেতে সিঙ্ক রাখা)
         onValue(ref(db, 'users'), (snapshot) => { 
             const data = snapshot.val(); 
-            window.allUsers = data ? Object.values(data) : []; 
+            if(data) {
+                // অবজেক্টকে অ্যারেতে কনভার্ট করা
+                window.allUsers = Object.keys(data).map(key => {
+                    return { phone: key, ...data[key] };
+                });
+            } else {
+                window.allUsers = [];
+            }
+            
             renderTechs(window.allUsers); 
             
+            // যদি অ্যাডমিন প্যানেল স্ক্রিনে খোলা থাকে, তবে ডাটাবেজে পরিবর্তন হলে রিয়েল-টাইমে আপডেট হবে
+            if(document.getElementById('adminPanelModal').classList.contains('modal-active')) {
+                loadAdminPanel();
+            }
+
             const saved = localStorage.getItem('loggedInUser');
             if (saved && data && data[saved]) {
-                window.currentUser = data[saved];
+                window.currentUser = { phone: saved, ...data[saved] };
                 updateUIForLoggedInUser();
             }
         });
 
+        // কাস্টমারদের জন্য হোমপেজ লিস্ট
         window.renderTechs = (users) => {
             const list = document.getElementById('techList'); list.innerHTML = "";
             users.forEach(u => {
                 const v = u.status === 'Verified' ? '<i class="fas fa-check-circle verify-badge"></i>' : '';
-                list.innerHTML += `<div class="tech-card"><div class="flex items-center gap-4 mb-4"><img src="${u.profilePic || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded-full object-cover"><div><h4 class="font-black text-sm">${u.name}${v}</h4><span class="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">${u.expertise || 'Expert'}</span></div></div><div class="text-[10px] font-bold text-slate-500 mb-4"><i class="fas fa-map-marker-alt text-red-400"></i> ${u.location || 'Feni'}</div><a href="tel:${u.phone}" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs shadow-lg"><i class="fas fa-phone-alt"></i> CALL NOW</a></div>`;
+                list.innerHTML += `
+                    <div class="tech-card">
+                        <div class="flex items-center gap-4 mb-4">
+                            <img src="${u.profilePic || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded-full object-cover">
+                            <div>
+                                <h4 class="font-black text-sm">${u.name || 'No Name'}${v}</h4>
+                                <span class="text-[8px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase">${u.expertise || 'Expert'}</span>
+                            </div>
+                        </div>
+                        <div class="text-[10px] font-bold text-slate-500 mb-4">
+                            <i class="fas fa-map-marker-alt text-red-400"></i> ${u.location || 'Feni'}
+                        </div>
+                        <a href="tel:${OFFICIAL_COMPANY_NUMBER}" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-xs shadow-lg active:scale-95 transition">
+                            <i class="fas fa-phone-alt"></i> CALL NOW
+                        </a>
+                    </div>`;
             });
         };
 
-        window.filterTech = (cat) => { if(cat === 'All') renderTechs(window.allUsers); else renderTechs(window.allUsers.filter(u => u.expertise === cat)); };
+        // ফিক্সড: শক্তিশালী অ্যাডমিন প্যানেল লোডার (ডাটাবেজ অবজেক্ট হ্যান্ডলিং সহ)
+        window.loadAdminPanel = () => {
+            const tbody = document.getElementById('adminList');
+            tbody.innerHTML = "";
+            
+            if(!window.allUsers || window.allUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">কোনো টেকনিশিয়ান ডাটা পাওয়া যায়নি।</td></tr>`;
+                return;
+            }
+
+            window.allUsers.forEach(u => {
+                // ফোন নাম্বার না থাকলে সেই রো স্কিপ করবে
+                if(!u.phone) return;
+
+                const docLink = u.vDoc ? `<a href="${u.vDoc}" target="_blank" class="text-blue-500 underline text-xs block">View NID</a>` : '<span class="text-slate-300 text-xs">No NID</span>';
+                const selfLink = u.vSelfie ? `<a href="${u.vSelfie}" target="_blank" class="text-blue-500 underline text-xs block">View Selfie</a>` : '<span class="text-slate-300 text-xs">No Selfie</span>';
+                
+                const statusBadge = u.status === 'Verified' 
+                    ? `<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs uppercase">Verified</span>`
+                    : (u.status === 'Pending' ? `<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs uppercase">Pending</span>` : `<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs uppercase">Unverified</span>`);
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-4 flex items-center gap-3">
+                            <img src="${u.profilePic || 'https://via.placeholder.com/150'}" class="w-10 h-10 rounded-full object-cover">
+                            <div>
+                                <p class="font-black text-sm text-slate-800">${u.name || 'No Name'}</p>
+                                <p class="text-[10px] text-slate-400">Pass: ${u.pass || 'N/A'}</p>
+                            </div>
+                        </td>
+                        <td class="p-4"><span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs">${u.expertise || 'Expert'}</span></td>
+                        <td class="p-4">
+                            <a href="tel:${u.phone}" class="text-blue-600 font-bold hover:underline block"><i class="fas fa-phone-alt text-[10px] text-slate-400 mr-1"></i> ${u.phone}</a>
+                        </td>
+                        <td class="p-4 text-xs text-slate-500">${u.location || 'Feni'}</td>
+                        <td class="p-4 space-y-1">${docLink}${selfLink}</td>
+                        <td class="p-4 text-center">
+                            <div class="mb-2">${statusBadge}</div>
+                            ${u.status !== 'Verified' ? `<button onclick="approveExpert('${u.phone}')" class="bg-green-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-green-700 transition mr-1">Verify</button>` : ''}
+                            <button onclick="deleteExpert('${u.phone}')" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-red-600 transition"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        };
+
+        window.approveExpert = async (phone) => {
+            await update(ref(db, `users/${phone}`), { status: 'Verified' });
+            alert("Expert verified successfully!");
+            loadAdminPanel();
+        };
+
+        window.deleteExpert = async (phone) => {
+            if(confirm("আপনি কি নিশ্চিতভাবে এই টেকনিশিয়ানের অ্যাকাউন্টটি মুছে ফেলতে চান?")) {
+                await set(ref(db, `users/${phone}`), null);
+                alert("Account deleted!");
+                loadAdminPanel();
+            }
+        };
+
+        window.filterTech = (cat) => { 
+            if(cat === 'All') renderTechs(window.allUsers); 
+            else renderTechs(window.allUsers.filter(u => u.expertise === cat)); 
+        };
 
         window.searchTechs = () => {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -382,7 +500,7 @@
 
         window.submitVerify = async () => { 
             await update(ref(db, `users/${window.currentUser.phone}`), { status: 'Pending', vDoc: document.getElementById('vNidPrev').src, vSelfie: document.getElementById('vSelfPrev').src }); 
-            alert("Submitted!"); 
+            alert("ভেরিফিকেশন রিকোয়েস্ট সাবমিট হয়েছে!"); 
             document.getElementById('verifyModal').classList.add('hidden');
         };
 
@@ -415,7 +533,7 @@
             if (saved) {
                 const snap = await get(child(ref(db), `users/${saved}`));
                 if (snap.exists()) { 
-                    window.currentUser = snap.val(); 
+                    window.currentUser = { phone: saved, ...snap.val() }; 
                     updateUIForLoggedInUser();
                 }
             }
